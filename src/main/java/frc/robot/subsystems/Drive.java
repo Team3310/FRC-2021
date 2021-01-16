@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.sensors.CANCoder;
 import com.ctre.phoenix.sensors.PigeonIMU;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
@@ -39,7 +40,43 @@ public class Drive extends SubsystemBase {
     private SwerveModule frontRight;
     private SwerveModule backRight;
 
+    // Speed Control
+    private static final double STEER_NON_LINEARITY = 0.5;
+    private static final double MOVE_NON_LINEARITY = 1.0;
+
+    private static final int MOVE_NON_LINEAR = 0;
+    private static final int STEER_NON_LINEAR = -3;
+
+    private static final double MOVE_SCALE = 1.0;
+    private static final double STEER_SCALE = 0.75;
+
+    private static final double MOVE_TRIM = 0.0;
+    private static final double STEER_TRIM = 0.0;
+
+    private static final double STICK_DEADBAND = 0.02;
+
+    public static final double OPEN_LOOP_PERCENT_OUTPUT_LO = 0.6;
+    public static final double OPEN_LOOP_PERCENT_OUTPUT_HI = 1.0;
+
+    public static final double OPEN_LOOP_VOLTAGE_RAMP_HI = 0.3;
+    public static final double OPEN_LOOP_VOLTAGE_RAMP_LO = 0.3;
+
+    private double m_moveInput = 0.0;
+    private double m_steerInput = 0.0;
+
+    private double m_moveOutput = 0.0;
+    private double m_steerOutput = 0.0;
+
+    private boolean isHighGear = false;
+
     private PigeonIMU m_gyro;
+    private double[] yprPigeon = new double[3];
+    private short[] xyzPigeon = new short[3];
+    private boolean isCalibrating = false;
+    private double gyroYawOffsetAngleDeg = Constants.DRIVE_COMPETITION_GYRO_HOME_ANGLE_DEGREES;
+
+    // Differential Drive
+    private DifferentialDrive m_drive;
     private GameController m_driverController;
     private SwerveDriveOdometry m_odometry;
 
@@ -61,10 +98,6 @@ public class Drive extends SubsystemBase {
 
     public static Drive getInstance() {
         return INSTANCE;
-    }
-
-    public synchronized double getGyroFusedHeadingAngleDeg() {
-        return m_gyro.getFusedHeading();
     }
 
     public void setDriverController(GameController driverController) {
@@ -135,6 +168,92 @@ public class Drive extends SubsystemBase {
     private double forward = chassisSpeeds.vxMetersPerSecond;
     private double sideways = chassisSpeeds.vyMetersPerSecond;
     private double angular = chassisSpeeds.omegaRadiansPerSecond;
+
+    // Gyro Set Up
+    public void calibrateGyro() {
+        m_gyro.enterCalibrationMode(PigeonIMU.CalibrationMode.Temperature);
+    }
+
+    public void endGyroCalibration() {
+        if (isCalibrating == true) {
+            isCalibrating = false;
+        }
+    }
+
+    public void setGyroYawOffset(double offsetDeg) {
+        gyroYawOffsetAngleDeg = offsetDeg;
+    }
+
+    public synchronized double getGyroYawAngleDeg() {
+        m_gyro.getYawPitchRoll(yprPigeon);
+        return yprPigeon[0] + gyroYawOffsetAngleDeg;
+    }
+
+    public synchronized double getGyroFusedHeadingAngleDeg() {
+        return m_gyro.getFusedHeading() + gyroYawOffsetAngleDeg;
+    }
+
+    public synchronized double getGyroPitchAngle() {
+        m_gyro.getYawPitchRoll(yprPigeon);
+        return yprPigeon[2];
+    }
+
+    public synchronized void resetGyroYawAngle() {
+        m_gyro.setYaw(0);
+        m_gyro.setFusedHeading(0);
+    }
+
+    public synchronized void resetGyroYawAngle(double homeAngle) {
+        resetGyroYawAngle();
+        setGyroYawOffset(homeAngle);
+    }
+
+    public double adjustForSensitivity(double scale, double trim, double steer, int nonLinearFactor,
+                                       double wheelNonLinearity) {
+        if (inDeadZone(steer))
+            return 0;
+
+        steer += trim;
+        steer *= scale;
+        steer = limitValue(steer);
+
+        int iterations = Math.abs(nonLinearFactor);
+        for (int i = 0; i < iterations; i++) {
+            if (nonLinearFactor > 0) {
+                steer = nonlinearStickCalcPositive(steer, wheelNonLinearity);
+            } else {
+                steer = nonlinearStickCalcNegative(steer, wheelNonLinearity);
+            }
+        }
+        return steer;
+    }
+
+    private boolean inDeadZone(double input) {
+        boolean inDeadZone;
+        if (Math.abs(input) < STICK_DEADBAND) {
+            inDeadZone = true;
+        } else {
+            inDeadZone = false;
+        }
+        return inDeadZone;
+    }
+
+    private double limitValue(double value) {
+        if (value > 1.0) {
+            value = 1.0;
+        } else if (value < -1.0) {
+            value = -1.0;
+        }
+        return value;
+    }
+
+    private double nonlinearStickCalcPositive(double steer, double steerNonLinearity) {
+        return Math.sin(Math.PI / 2.0 * steerNonLinearity * steer) / Math.sin(Math.PI / 2.0 * steerNonLinearity);
+    }
+
+    private double nonlinearStickCalcNegative(double steer, double steerNonLinearity) {
+        return Math.asin(steerNonLinearity * steer) / Math.asin(steerNonLinearity);
+    }
 
     @Override
     public void periodic() {

@@ -30,10 +30,17 @@ public final class Constants {
     public static final int BOTTOM_LEFT_STEER_CAN_ID = 0;
     public static final int BOTTOM_RIGHT_STEER_CAN_ID = 0;
 
+    // Gyro
     public static final int GYRO_CAN_ID = 0;
 
     public static final Translation2d FRONT_LEFT_WHEEL_LOCATION = new Translation2d(0.186055,0.186055);
     public static final Translation2d FRONT_RIGHT_WHEEL_LOCATION = new Translation2d(0.186055, -0.186055);
     public static final Translation2d BACK_LEFT_WHEEL_LOCATION = new Translation2d(-0.186055, 0.186055);
     public static final Translation2d BACK_RIGHT_WHEEL_LOCATION = new Translation2d(-0.186055, -0.186055);
+
+    // Drive
+    public static final double DRIVE_COMPETITION_GYRO_HOME_ANGLE_DEGREES = 0.0;
+
+
+
 }
