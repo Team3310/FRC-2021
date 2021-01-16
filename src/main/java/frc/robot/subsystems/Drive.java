@@ -71,6 +71,32 @@ public class Drive extends SubsystemBase {
         m_driverController = driverController;
     }
 
+    public synchronized void driveWithJoystick() {
+        if (m_drive == null) {
+            return;
+        }
+
+        boolean isHighGearPrevious = isHighGear;
+        //       isHighGear = m_driverController.getRightBumper().get();
+        isHighGear = m_driverController.getRightTrigger().get();
+        if (isHighGearPrevious != isHighGear) {
+            updateOpenLoopVoltageRamp();
+        }
+
+        double shiftScaleFactor = OPEN_LOOP_PERCENT_OUTPUT_LO;
+        if (isHighGear == true) {
+            shiftScaleFactor = OPEN_LOOP_PERCENT_OUTPUT_HI;
+        }
+
+        m_moveInput = -m_driverController.getLeftYAxis();
+        m_steerInput = m_driverController.getRightXAxis();
+
+        m_moveOutput = adjustForSensitivity(MOVE_SCALE * shiftScaleFactor, MOVE_TRIM, m_moveInput, MOVE_NON_LINEAR, MOVE_NON_LINEARITY);
+        m_steerOutput = adjustForSensitivity(STEER_SCALE, STEER_TRIM, m_steerInput, STEER_NON_LINEAR, STEER_NON_LINEARITY);
+
+        m_drive.arcadeDrive(m_moveOutput, m_steerOutput);
+    }
+
     // Example chassis speeds: 1 meter per second forward, 3 meters
     // per second to the left, and rotation at 1.5 radians per second
     // counterclockwise.
