@@ -14,8 +14,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.controller.GameController;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 
 public class Drive extends SubsystemBase {
 
@@ -44,35 +42,6 @@ public class Drive extends SubsystemBase {
     private SwerveModule backLeft;
     private SwerveModule frontRight;
     private SwerveModule backRight;
-
-    // Speed Control
-//    private static final double STEER_NON_LINEARITY = 0.5;
-//    private static final double MOVE_NON_LINEARITY = 1.0;
-//
-//    private static final int MOVE_NON_LINEAR = 0;
-//    private static final int STEER_NON_LINEAR = -3;
-//
-//    private static final double MOVE_SCALE = 1.0;
-//    private static final double STEER_SCALE = 0.75;
-//
-//    private static final double MOVE_TRIM = 0.0;
-//    private static final double STEER_TRIM = 0.0;
-//
-//    private static final double STICK_DEADBAND = 0.02;
-//
-//    public static final double OPEN_LOOP_PERCENT_OUTPUT_LO = 0.6;
-//    public static final double OPEN_LOOP_PERCENT_OUTPUT_HI = 1.0;
-//
-//    public static final double OPEN_LOOP_VOLTAGE_RAMP_HI = 0.3;
-//    public static final double OPEN_LOOP_VOLTAGE_RAMP_LO = 0.3;
-//
-//    private double m_moveInput = 0.0;
-//    private double m_steerInput = 0.0;
-//
-//    private double m_moveOutput = 0.0;
-//    private double m_steerOutput = 0.0;
-
-    private boolean isHighGear = false;
 
     private PigeonIMU m_gyro;
     private double[] yprPigeon = new double[3];
@@ -134,19 +103,20 @@ public class Drive extends SubsystemBase {
 //
 //        m_drive.arcadeDrive(m_moveOutput, m_steerOutput);
 //    }
-public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
-    var swerveModuleStates =
-            m_kinematics.toSwerveModuleStates(
+
+    public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
+        var swerveModuleStates =
+                m_kinematics.toSwerveModuleStates(
                     fieldRelative
                             ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, Rotation2d.fromDegrees(m_gyro.getFusedHeading()))
                             : new ChassisSpeeds(xSpeed, ySpeed, rot));
-    SwerveDriveKinematics.normalizeWheelSpeeds(
+     SwerveDriveKinematics.normalizeWheelSpeeds(
             swerveModuleStates, Constants.kMaxSpeedMetersPerSecond);
-    frontLeft.setDesiredState(swerveModuleStates[0]);
-    frontRight.setDesiredState(swerveModuleStates[1]);
-    backLeft.setDesiredState(swerveModuleStates[2]);
-    backRight.setDesiredState(swerveModuleStates[3]);
-}
+        frontLeft.setDesiredState(swerveModuleStates[0]);
+        frontRight.setDesiredState(swerveModuleStates[1]);
+        backLeft.setDesiredState(swerveModuleStates[2]);
+        backRight.setDesiredState(swerveModuleStates[3]);
+    }
 
     public void setModuleStates(SwerveModuleState[] desiredStates) {
         SwerveDriveKinematics.normalizeWheelSpeeds(
@@ -161,7 +131,7 @@ public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelativ
     // per second to the left, and rotation at 1.5 radians per second
     // counterclockwise.
     private ChassisSpeeds speeds = new ChassisSpeeds(0.0, 0.0, 0.0);
-    
+
 
 
     private ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
