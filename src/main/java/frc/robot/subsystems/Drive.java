@@ -11,6 +11,8 @@ import edu.wpi.first.wpilibj.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.wpilibj.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.controller.GameController;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -38,7 +40,7 @@ public class Drive extends SubsystemBase {
     private SwerveModule backRight;
 
     private PigeonIMU m_gyro;
-
+    private GameController m_driverController;
     private SwerveDriveOdometry m_odometry;
 
     private SwerveDriveKinematics m_kinematics = new SwerveDriveKinematics(
@@ -57,8 +59,16 @@ public class Drive extends SubsystemBase {
         m_odometry = new SwerveDriveOdometry(m_kinematics,Rotation2d.fromDegrees(getGyroFusedHeadingAngleDeg()));
     }
 
+    public static Drive getInstance() {
+        return INSTANCE;
+    }
+
     public synchronized double getGyroFusedHeadingAngleDeg() {
         return m_gyro.getFusedHeading();
+    }
+
+    public void setDriverController(GameController driverController) {
+        m_driverController = driverController;
     }
 
     // Example chassis speeds: 1 meter per second forward, 3 meters

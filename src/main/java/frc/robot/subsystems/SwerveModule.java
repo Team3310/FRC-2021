@@ -17,7 +17,6 @@ public class SwerveModule {
         this.turn = turn;
     }
 
-
     public void setSpeed() {
 
     }

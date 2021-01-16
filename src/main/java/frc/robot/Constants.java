@@ -16,6 +16,10 @@ import edu.wpi.first.wpilibj.geometry.Translation2d;
  */
 public final class Constants {
 
+    // USB Port IDs
+    public static final int DRIVER_JOYSTICK_1_USB_ID = 0;
+    public static final int OPERATOR_JOYSTICK_1_USB_ID = 1;
+
     public static final int TOP_LEFT_DRIVE_CAN_ID = 0;
     public static final int TOP_RIGHT_DRIVE_CAN_ID = 0;
     public static final int BOTTOM_LEFT_DRIVE_CAN_ID = 0;
