@@ -40,6 +40,7 @@ public final class Constants {
 
     // Drive
     public static final double DRIVE_COMPETITION_GYRO_HOME_ANGLE_DEGREES = 0.0;
+    public static final double kMaxSpeedMetersPerSecond = 5;
 
 
 

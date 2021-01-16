@@ -30,10 +30,15 @@ public class Drive extends SubsystemBase {
     private TalonFX backLeftDrive;
     private TalonFX backRightDrive;
 
-    private CANCoder frontLeftTurn;
-    private CANCoder frontRightTurn;
-    private CANCoder backLeftTurn;
-    private CANCoder backRightTurn;
+    private TalonFX frontLeftTurn;
+    private TalonFX frontRightTurn;
+    private TalonFX backLeftTurn;
+    private TalonFX backRightTurn;
+
+    private CANCoder frontLeftCoder;
+    private CANCoder frontRightCoder;
+    private CANCoder backLeftCoder;
+    private CANCoder backRightCoder;
 
     private SwerveModule frontLeft;
     private SwerveModule backLeft;
@@ -41,31 +46,31 @@ public class Drive extends SubsystemBase {
     private SwerveModule backRight;
 
     // Speed Control
-    private static final double STEER_NON_LINEARITY = 0.5;
-    private static final double MOVE_NON_LINEARITY = 1.0;
-
-    private static final int MOVE_NON_LINEAR = 0;
-    private static final int STEER_NON_LINEAR = -3;
-
-    private static final double MOVE_SCALE = 1.0;
-    private static final double STEER_SCALE = 0.75;
-
-    private static final double MOVE_TRIM = 0.0;
-    private static final double STEER_TRIM = 0.0;
-
-    private static final double STICK_DEADBAND = 0.02;
-
-    public static final double OPEN_LOOP_PERCENT_OUTPUT_LO = 0.6;
-    public static final double OPEN_LOOP_PERCENT_OUTPUT_HI = 1.0;
-
-    public static final double OPEN_LOOP_VOLTAGE_RAMP_HI = 0.3;
-    public static final double OPEN_LOOP_VOLTAGE_RAMP_LO = 0.3;
-
-    private double m_moveInput = 0.0;
-    private double m_steerInput = 0.0;
-
-    private double m_moveOutput = 0.0;
-    private double m_steerOutput = 0.0;
+//    private static final double STEER_NON_LINEARITY = 0.5;
+//    private static final double MOVE_NON_LINEARITY = 1.0;
+//
+//    private static final int MOVE_NON_LINEAR = 0;
+//    private static final int STEER_NON_LINEAR = -3;
+//
+//    private static final double MOVE_SCALE = 1.0;
+//    private static final double STEER_SCALE = 0.75;
+//
+//    private static final double MOVE_TRIM = 0.0;
+//    private static final double STEER_TRIM = 0.0;
+//
+//    private static final double STICK_DEADBAND = 0.02;
+//
+//    public static final double OPEN_LOOP_PERCENT_OUTPUT_LO = 0.6;
+//    public static final double OPEN_LOOP_PERCENT_OUTPUT_HI = 1.0;
+//
+//    public static final double OPEN_LOOP_VOLTAGE_RAMP_HI = 0.3;
+//    public static final double OPEN_LOOP_VOLTAGE_RAMP_LO = 0.3;
+//
+//    private double m_moveInput = 0.0;
+//    private double m_steerInput = 0.0;
+//
+//    private double m_moveOutput = 0.0;
+//    private double m_steerOutput = 0.0;
 
     private boolean isHighGear = false;
 
@@ -87,10 +92,10 @@ public class Drive extends SubsystemBase {
 
     /** Creates a new ExampleSubsystem. */
     public Drive() {
-        frontLeft = new SwerveModule(frontLeftDrive, frontLeftTurn, "Front_Left_Module");
-        frontRight = new SwerveModule(frontRightDrive, frontRightTurn, "Front_Right_Module");
-        backLeft = new SwerveModule(backLeftDrive, backLeftTurn, "Back_Left_Module");
-        backRight = new SwerveModule(backRightDrive, backRightTurn, "Back_Right_Module");
+        frontLeft = new SwerveModule(frontLeftDrive, frontLeftTurn, frontLeftCoder, "Front_Left_Module");
+        frontRight = new SwerveModule(frontRightDrive, frontRightTurn, frontRightCoder,"Front_Right_Module");
+        backLeft = new SwerveModule(backLeftDrive, backLeftTurn, backLeftCoder,"Back_Left_Module");
+        backRight = new SwerveModule(backRightDrive, backRightTurn,backRightCoder, "Back_Right_Module");
 
         m_gyro = new PigeonIMU(Constants.GYRO_CAN_ID);
         m_odometry = new SwerveDriveOdometry(m_kinematics,Rotation2d.fromDegrees(getGyroFusedHeadingAngleDeg()));
@@ -104,51 +109,59 @@ public class Drive extends SubsystemBase {
         m_driverController = driverController;
     }
 
-    public synchronized void driveWithJoystick() {
-        if (m_drive == null) {
-            return;
-        }
+//    public synchronized void driveWithJoystick() {
+//        if (m_drive == null) {
+//            return;
+//        }
+//
+//        boolean isHighGearPrevious = isHighGear;
+//        //       isHighGear = m_driverController.getRightBumper().get();
+//        isHighGear = m_driverController.getRightTrigger().get();
+//        if (isHighGearPrevious != isHighGear) {
+//            updateOpenLoopVoltageRamp();
+//        }
+//
+//        double shiftScaleFactor = OPEN_LOOP_PERCENT_OUTPUT_LO;
+//        if (isHighGear == true) {
+//            shiftScaleFactor = OPEN_LOOP_PERCENT_OUTPUT_HI;
+//        }
+//
+//        m_moveInput = -m_driverController.getLeftYAxis();
+//        m_steerInput = m_driverController.getRightXAxis();
+//
+//        m_moveOutput = adjustForSensitivity(MOVE_SCALE * shiftScaleFactor, MOVE_TRIM, m_moveInput, MOVE_NON_LINEAR, MOVE_NON_LINEARITY);
+//        m_steerOutput = adjustForSensitivity(STEER_SCALE, STEER_TRIM, m_steerInput, STEER_NON_LINEAR, STEER_NON_LINEARITY);
+//
+//        m_drive.arcadeDrive(m_moveOutput, m_steerOutput);
+//    }
+public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
+    var swerveModuleStates =
+            m_kinematics.toSwerveModuleStates(
+                    fieldRelative
+                            ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, Rotation2d.fromDegrees(m_gyro.getFusedHeading()))
+                            : new ChassisSpeeds(xSpeed, ySpeed, rot));
+    SwerveDriveKinematics.normalizeWheelSpeeds(
+            swerveModuleStates, Constants.kMaxSpeedMetersPerSecond);
+    frontLeft.setDesiredState(swerveModuleStates[0]);
+    frontRight.setDesiredState(swerveModuleStates[1]);
+    backLeft.setDesiredState(swerveModuleStates[2]);
+    backRight.setDesiredState(swerveModuleStates[3]);
+}
 
-        boolean isHighGearPrevious = isHighGear;
-        //       isHighGear = m_driverController.getRightBumper().get();
-        isHighGear = m_driverController.getRightTrigger().get();
-        if (isHighGearPrevious != isHighGear) {
-            updateOpenLoopVoltageRamp();
-        }
-
-        double shiftScaleFactor = OPEN_LOOP_PERCENT_OUTPUT_LO;
-        if (isHighGear == true) {
-            shiftScaleFactor = OPEN_LOOP_PERCENT_OUTPUT_HI;
-        }
-
-        m_moveInput = -m_driverController.getLeftYAxis();
-        m_steerInput = m_driverController.getRightXAxis();
-
-        m_moveOutput = adjustForSensitivity(MOVE_SCALE * shiftScaleFactor, MOVE_TRIM, m_moveInput, MOVE_NON_LINEAR, MOVE_NON_LINEARITY);
-        m_steerOutput = adjustForSensitivity(STEER_SCALE, STEER_TRIM, m_steerInput, STEER_NON_LINEAR, STEER_NON_LINEARITY);
-
-        m_drive.arcadeDrive(m_moveOutput, m_steerOutput);
+    public void setModuleStates(SwerveModuleState[] desiredStates) {
+        SwerveDriveKinematics.normalizeWheelSpeeds(
+                desiredStates, Constants.kMaxSpeedMetersPerSecond);
+        frontLeft.setDesiredState(desiredStates[0]);
+        frontRight.setDesiredState(desiredStates[1]);
+        backLeft.setDesiredState(desiredStates[2]);
+        backRight.setDesiredState(desiredStates[3]);
     }
 
     // Example chassis speeds: 1 meter per second forward, 3 meters
     // per second to the left, and rotation at 1.5 radians per second
     // counterclockwise.
     private ChassisSpeeds speeds = new ChassisSpeeds(0.0, 0.0, 0.0);
-
-    // Convert to module states
-    private SwerveModuleState[] moduleStates = m_kinematics.toSwerveModuleStates(speeds);
-
-    // Front left module state
-    SwerveModuleState frontLeftModuleState = moduleStates[0];
-
-    // Front right module state
-    SwerveModuleState frontRightModuleState = moduleStates[0];
-
-    // Back left module state
-    SwerveModuleState bottomLeftModuleState = moduleStates[0];
-
-    // Back right module state
-    SwerveModuleState backRightModuleState = moduleStates[0];
+    
 
 
     private ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
@@ -206,53 +219,6 @@ public class Drive extends SubsystemBase {
     public synchronized void resetGyroYawAngle(double homeAngle) {
         resetGyroYawAngle();
         setGyroYawOffset(homeAngle);
-    }
-
-    public double adjustForSensitivity(double scale, double trim, double steer, int nonLinearFactor,
-                                       double wheelNonLinearity) {
-        if (inDeadZone(steer))
-            return 0;
-
-        steer += trim;
-        steer *= scale;
-        steer = limitValue(steer);
-
-        int iterations = Math.abs(nonLinearFactor);
-        for (int i = 0; i < iterations; i++) {
-            if (nonLinearFactor > 0) {
-                steer = nonlinearStickCalcPositive(steer, wheelNonLinearity);
-            } else {
-                steer = nonlinearStickCalcNegative(steer, wheelNonLinearity);
-            }
-        }
-        return steer;
-    }
-
-    private boolean inDeadZone(double input) {
-        boolean inDeadZone;
-        if (Math.abs(input) < STICK_DEADBAND) {
-            inDeadZone = true;
-        } else {
-            inDeadZone = false;
-        }
-        return inDeadZone;
-    }
-
-    private double limitValue(double value) {
-        if (value > 1.0) {
-            value = 1.0;
-        } else if (value < -1.0) {
-            value = -1.0;
-        }
-        return value;
-    }
-
-    private double nonlinearStickCalcPositive(double steer, double steerNonLinearity) {
-        return Math.sin(Math.PI / 2.0 * steerNonLinearity * steer) / Math.sin(Math.PI / 2.0 * steerNonLinearity);
-    }
-
-    private double nonlinearStickCalcNegative(double steer, double steerNonLinearity) {
-        return Math.asin(steerNonLinearity * steer) / Math.asin(steerNonLinearity);
     }
 
     @Override
