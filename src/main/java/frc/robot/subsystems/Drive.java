@@ -25,15 +25,15 @@ public class Drive extends SubsystemBase {
 
     private DriveControlMode driveControlMode = DriveControlMode.JOYSTICK;
 
-    private TalonFX topLeftDrive;
-    private TalonFX topRightDrive;
-    private TalonFX bottomLeftDrive;
-    private TalonFX bottomRightDrive;
+    private TalonFX frontLeftDrive;
+    private TalonFX frontRightDrive;
+    private TalonFX backLeftDrive;
+    private TalonFX backRightDrive;
 
-    private CANCoder topLeftTurn;
-    private CANCoder topRightTurn;
-    private CANCoder bottomLeftTurn;
-    private CANCoder bottomRightTurn;
+    private CANCoder frontLeftTurn;
+    private CANCoder frontRightTurn;
+    private CANCoder backLeftTurn;
+    private CANCoder backRightTurn;
 
     private SwerveModule frontLeft;
     private SwerveModule backLeft;
@@ -87,10 +87,10 @@ public class Drive extends SubsystemBase {
 
     /** Creates a new ExampleSubsystem. */
     public Drive() {
-        frontLeft = new SwerveModule(topLeftDrive, topLeftTurn, "Top_Left_Module");
-        frontRight = new SwerveModule(topRightDrive, topRightTurn, "Top_Right_Module");
-        backLeft = new SwerveModule(bottomLeftDrive, bottomLeftTurn, "Bottom_Left_Module");
-        backRight = new SwerveModule(bottomRightDrive, bottomRightTurn, "bottom_Right_Module");
+        frontLeft = new SwerveModule(frontLeftDrive, frontLeftTurn, "Front_Left_Module");
+        frontRight = new SwerveModule(frontRightDrive, frontRightTurn, "Front_Right_Module");
+        backLeft = new SwerveModule(backLeftDrive, backLeftTurn, "Back_Left_Module");
+        backRight = new SwerveModule(backRightDrive, backRightTurn, "Back_Right_Module");
 
         m_gyro = new PigeonIMU(Constants.GYRO_CAN_ID);
         m_odometry = new SwerveDriveOdometry(m_kinematics,Rotation2d.fromDegrees(getGyroFusedHeadingAngleDeg()));
